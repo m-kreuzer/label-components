@@ -65,36 +65,40 @@ def prepare_output(input_filename, output_filename):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) == 3:
-        input_filename = sys.argv[1]
-        output_filename = sys.argv[2]
-    elif len(sys.argv) == 2:
-        input_filename = sys.argv[1]
+    if len(sys.argv) == 4:
+        input_topg_filename = sys.argv[1]
+        input_mask_filename = sys.argv[2]
+        output_filename = sys.argv[3]
+    elif len(sys.argv) == 3:
+        input_topg_filename = sys.argv[1]
+        input_mask_filename = sys.argv[2]
         output_filename = "max_depth.nc"
     else:
-        input_filename = "BedMachineAntarctica-v3.nc"
+        input_topg_filename = "BedMachineAntarctica-v3.nc"
+        input_mask_filename = "BedMachineAntarctica-v3.nc"
         output_filename = "max_depth.nc"
 
-    sys.stderr.write(f"Reading from {input_filename}...\n")
-    dataset = netCDF4.Dataset(input_filename)
-    try:
-        # BedMachine
-        bed = dataset.variables["bed"][:]
-        mask = dataset.variables["mask"][:]
-        depth = -1 * np.array(bed, dtype=dtype)
-        depth[mask == 2] = -1
-        del bed
-        del mask
-    except:
-        # ALBMAPv1 (for testing)
-        bed = dataset.variables["topg"][:]
-        lsrf = dataset.variables["lsrf"][:]
-        depth = -1 * np.array(bed, dtype=dtype)
-        depth[lsrf == bed] = -1
-        del bed
-        del lsrf
+    sys.stderr.write(f"Reading from {input_topg_filename}...\n")
+    dataset_topg = netCDF4.Dataset(input_topg_filename)
+    if 'pism_config' in dataset_topg.variables:
+        bed = np.squeeze(dataset_topg.variables['topg'][:])
+    else:
+        bed = np.squeeze(dataset_topg.variables['bed'][:])
 
-    dataset.close()
+    sys.stderr.write(f"Reading from {input_mask_filename}...\n")
+    dataset_mask = netCDF4.Dataset(input_mask_filename)
+    mask = np.squeeze(dataset_mask['mask'][:])
+
+    assert bed.shape == mask.shape, 'Missmatch in input files dimensions'
+
+    depth = -1 * np.array(bed, dtype=dtype)
+    # set grounded to background value
+    depth[mask == 2] = -1
+    del bed
+    del mask
+
+    dataset_topg.close()
+    dataset_mask.close()
     sys.stderr.write(f"Done.\n")
 
     # Depth of the "open ocean" used to identify whether an area below
@@ -126,6 +130,6 @@ if __name__ == "__main__":
 
     print(f"Doing {n_steps} steps took {end - start} seconds. Average: {(end - start) / n_steps}")
 
-    dataset = prepare_output(input_filename, output_filename)
+    dataset = prepare_output(input_topg_filename, output_filename)
     dataset.variables["max_depth"][:] = max_depth
     dataset.close()
