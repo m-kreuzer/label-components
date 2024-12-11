@@ -110,7 +110,7 @@ if __name__ == "__main__":
     # Should be a) greater than the deepest depression in the interior
     # of Antarctica or Greenland, but small enough so that there
     # `depth > open_ocean_depth` is true somewhere on the grid.
-    open_ocean_depth = 3500
+    open_ocean_depth = 3700
 
     # Vertical resolution (currently: one meter). This implementation
     # uses 16 bit integers to represent ocean depth, so this is the
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # Number of vertical steps (iterations) to use. Should be large
     # enough so `step * n_steps` is greater than the depth of the deepest
     # depression in the interior.
-    n_steps = 3500
+    n_steps = 3700
 
     assert open_ocean_depth >= n_steps * step
     assert np.any(depth > open_ocean_depth)
