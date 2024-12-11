@@ -80,9 +80,13 @@ if __name__ == "__main__":
 
     sys.stderr.write(f"Reading from {input_topg_filename}...\n")
     dataset_topg = netCDF4.Dataset(input_topg_filename)
-    if 'pism_config' in dataset_topg.variables:
+    #if 'pism_config' in dataset_topg.variables:
+    #    bed = np.squeeze(dataset_topg.variables['topg'][:])
+    #else:
+    #    bed = np.squeeze(dataset_topg.variables['bed'][:])
+    try:
         bed = np.squeeze(dataset_topg.variables['topg'][:])
-    else:
+    except KeyError:
         bed = np.squeeze(dataset_topg.variables['bed'][:])
 
     sys.stderr.write(f"Reading from {input_mask_filename}...\n")
